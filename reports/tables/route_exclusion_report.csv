@@ -1,0 +1,2 @@
+transport,route,source_records,total_qr_validations,reason_for_exclusion
+Autobuss,95,4,6,Only four isolated observations; insufficient consecutive hourly records for next-hour forecasting

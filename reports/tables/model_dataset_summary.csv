@@ -1,0 +1,11 @@
+metric,value
+Source records,533195
+Model dataset rows,499348
+Transport-route combinations,89
+First forecast timestamp,2025-10-01 05:00:00
+Last forecast timestamp,2026-10-31 23:00:00
+Target missing values,0
+Current QR validation missing values,0
+Previous-hour feature missing values,32249
+Previous-day feature missing values,24135
+Previous-week feature missing values,27321

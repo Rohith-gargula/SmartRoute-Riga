@@ -1,0 +1,7 @@
+﻿column,data_type,missing_values,missing_percentage
+datums,datetime64[us],0,0.0
+stunda,str,0,0.0
+transports,str,0,0.0
+marsruts,object,0,0.0
+skaits,int64,0,0.0
+source_file,str,0,0.0

@@ -1,0 +1,2 @@
+transport,route,forecast_hour,observations,actual_total,RF_MAE,Baseline_MAE,RF_WAPE_percent,Baseline_WAPE_percent,RF_bias,Baseline_bias
+Tramvajs,1,17,60,75517.0,198.14236345784747,355.75,15.742868238238872,28.265158838407245,-193.00441935030287,-341.15
