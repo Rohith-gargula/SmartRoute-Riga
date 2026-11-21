@@ -1,352 +1,277 @@
+# SmartRoute-Riga
 
+### An Explainable Machine Learning Framework for Short-Term Public Transport Demand Forecasting and Operational Planning in Riga
 
-\# SmartRoute-Riga
+**An applied machine learning research project using real public transport data from Riga, Latvia.**
 
-\## An Explainable Machine Learning Framework for Short-Term Public Transport Demand Forecasting and Operational Planning in Riga
+---
 
+## Project Overview
 
+SmartRoute-Riga investigates whether historical QR ticket validation activity can be used to forecast QR validations on individual Riga public transport routes one hour ahead.
 
-\### Project Overview
+The project applies a complete machine learning workflow, including data quality assessment, exploratory analysis, time-based feature engineering, supervised regression, chronological model evaluation, feature importance analysis and prediction error investigation.
 
+The research uses publicly available data published by Rīgas Satiksme through the Latvian Open Data Portal.
 
+**Important measurement limitation:** The dataset records QR ticket validations, not every passenger boarding or travelling on public transport. QR validation counts are therefore treated as a proxy for observed validation activity, not as total passenger demand.
 
-SmartRoute-Riga is a machine learning research project that investigates whether historical QR ticket validation activity can be used to forecast the number of QR validations on Riga public transport routes in the next hour.
+## Key Results
 
+The final Random Forest model was evaluated on an untouched test period covering September–October 2026.
 
+| Metric | Random Forest | Persistence Baseline |
+|---|---:|---:|
+| MAE | **8.44** | 21.97 |
+| RMSE | **16.11** | 50.21 |
+| R² | **0.9740** | 0.7478 |
+| WAPE | **14.72%** | 38.33% |
 
-The project uses publicly available data from Rīgas Satiksme, published through the Latvian Open Data Portal. It applies data quality assessment, feature engineering, time-aware model evaluation, Random Forest regression and error analysis.
+The Random Forest achieved approximately **61.6% lower MAE** than the persistence baseline on the test period.
 
+These results represent retrospective performance on the available test data. They do not guarantee the same accuracy in future operational conditions.
 
-
-\*\*Important measurement limitation:\*\* The dataset records QR ticket validations, not every passenger boarding or travelling on public transport. Therefore, QR validation counts are used as a proxy for observed validation activity and must not be interpreted as total passenger demand.
-
-
-
-\### Research Question
-
-
+## Research Question
 
 Can machine learning predict the number of ticket validations on Riga public transport routes in the next hour using historical validation activity, time patterns, route information and transport characteristics?
 
+## Dataset
 
+| Attribute | Description |
+|---|---|
+| Source | Latvian Open Data Portal |
+| Publisher | Rīgas Satiksme |
+| Dataset | QR code validation data on Riga public transport vehicles |
+| Period | October 2025 – October 2026 |
+| Original records | 533,195 |
+| Transport modes | Autobuss, Trolejbuss and Tramvajs |
+| Licence | CC0 1.0 |
 
-\### Dataset
+**Official dataset:**  
+[QR code validation data – Latvian Open Data Portal](https://data.gov.lv/dati/dataset/kvadrat-kodu-validaciju-dati-rigas-satiksmes-sabiedriskajos-transportlidzeklos)
 
+The original dataset consists of 13 monthly CSV files. The fields include date, hour, transport type, route and validation count.
 
-
-\- Source: Latvian Open Data Portal
-
-\- Publisher: Rīgas Satiksme
-
-\- Dataset: QR code validation data on Riga public transport vehicles
-
-\- Data period: October 2025 – October 2026
-
-\- Transport modes: Autobuss, Trolejbuss and Tramvajs
-
-\- Original records: 533,195
-
-\- Licence: CC0 1.0
-
-
-
-Official dataset:
-
-https://data.gov.lv/dati/dataset/kvadrat-kodu-validaciju-dati-rigas-satiksmes-sabiedriskajos-transportlidzeklos
-
-
-
-\### Data Preparation
-
-
+## Data Preparation and Quality Assessment
 
 The project includes:
 
+1. Combining the 13 monthly source files.
+2. Inspecting data types, missing values, duplicate records and invalid values.
+3. Auditing route combinations and hourly interval coverage.
+4. Examining monthly and daily data completeness.
+5. Creating historical features for next-hour forecasting.
+6. Excluding a route with insufficient consecutive hourly observations for reliable next-hour modelling.
 
+The resulting modelling dataset contains **499,348 records across 89 transport-route combinations**.
 
-1\. Combining 13 monthly CSV files.
+Nine calendar dates in the observed period have no records. These dates were documented rather than automatically treated as days with zero validations.
 
-2\. Inspecting data types, missing values and duplicate records.
+Route 95 (Autobuss) was excluded from next-hour modelling because it had only four isolated observations and six validations in total. Its original records remain in the source data.
 
-3\. Auditing transport modes, routes and hourly intervals.
+## Methodology
 
-4\. Assessing calendar-date and hourly coverage.
+The task is formulated as a supervised regression problem.
 
-5\. Creating historical features for next-hour forecasting.
+The target variable is the number of QR validations in the next hour for a given transport mode and route.
 
-6\. Excluding one route with insufficient consecutive observations for reliable next-hour forecasting.
+### Feature Engineering
 
+The model uses:
 
+- Current-hour QR validation count.
+- Previous-hour validation count.
+- Same-hour validation count from the previous day.
+- Same-hour validation count from the previous week.
+- Hour, day, month and weekend indicators.
+- Cyclical time features.
+- Transport type and route information.
 
-The final modelling dataset contains 499,348 records and 89 transport-route combinations.
+Historical features are constructed using time-aware alignment to ensure that future observations are not used as inputs for earlier predictions.
 
+### Models Evaluated
 
+Three approaches were compared:
 
-\### Methodology
+1. **Persistence baseline:** Uses the current observed validation count as the next-hour prediction.
+2. **Random Forest Regressor:** An ensemble of decision trees used for nonlinear regression.
+3. **Extra Trees Regressor:** An ensemble method evaluated as an alternative tree-based model.
 
+Random Forest was selected based on its lower validation MAE.
 
+### Chronological Evaluation
 
-The prediction task is formulated as a supervised regression problem.
+A chronological split was used instead of random sampling to better represent forecasting on future observations.
 
+| Dataset | Period |
+|---|---|
+| Training | Before 1 July 2026 |
+| Validation | July–August 2026 |
+| Testing | September–October 2026 |
 
+The final selected model was refitted using the training and validation periods, then evaluated on the untouched test period.
 
-The target is the number of QR validations in the next hour for a given transport mode and route.
+## Model Performance Visualisations
 
+### Actual vs Predicted Values
 
+![Actual vs Predicted](reports/figures/actual_vs_predicted.png)
 
-Features include:
+This chart compares observed QR validation counts with the model's predictions on the test data.
 
+### Prediction Error Distribution
 
+![Prediction Error Distribution](reports/figures/prediction_error_distribution.png)
 
-\- Current-hour QR validations.
+This visualisation examines the distribution of prediction errors and helps identify the spread of model deviations.
 
-\- Previous-hour QR validations.
+### MAE by Hour
 
-\- Same-hour validations from the previous day.
+![MAE by Hour](reports/figures/mae_by_hour.png)
 
-\- Same-hour validations from the previous week.
+This chart compares model error across different hours of the day.
 
-\- Forecast hour, day, month and weekend indicators.
+### MAE by Transport Mode
 
-\- Cyclical time features.
+![MAE by Transport](reports/figures/mae_by_transport.png)
 
-\- Transport and route information.
+This chart compares prediction error across buses, trolleybuses and trams.
 
+## Explainability and Error Analysis
 
+Feature importance analysis identified the following important predictive signals:
 
-\### Models
+- Current-hour validation count: approximately 41.9%.
+- Same-hour previous-week validation count: approximately 22.5%.
+- Same-hour previous-day validation count: approximately 9.6%.
+- Previous-hour validation count: approximately 5.4%.
 
-
-
-The following approaches were evaluated:
-
-
-
-\- Persistence baseline: the current observed validation count is used as the next-hour prediction.
-
-\- Random Forest Regressor.
-
-\- Extra Trees Regressor.
-
-
-
-A chronological split was used to reduce temporal data leakage:
-
-
-
-\- Training: before 1 July 2026.
-
-\- Validation: July–August 2026.
-
-\- Testing: September–October 2026.
-
-
-
-Random Forest was selected based on validation MAE and evaluated on the held-out test period.
-
-
-
-\### Final Test Results
-
-
-
-| Metric | Random Forest | Persistence Baseline |
-
-|---|---:|---:|
-
-| MAE | 8.44 | 21.97 |
-
-| RMSE | 16.11 | 50.21 |
-
-| R² | 0.9740 | 0.7478 |
-
-| WAPE | 14.72% | 38.33% |
-
-
-
-The Random Forest achieved approximately 61.6% lower MAE than the persistence baseline on the test period.
-
-
-
-These are retrospective test results, not a guarantee of future operational performance.
-
-
-
-\### Explainability and Error Analysis
-
-
-
-Feature importance analysis identified current-hour QR validations and historical same-hour patterns as important predictive signals.
-
-
+These values describe the model's feature importance, not causal effects.
 
 Additional analysis examined:
 
+- Prediction errors by transport mode.
+- Prediction errors by route.
+- Model performance by hour.
+- Peak and off-peak periods.
+- Prediction bias and largest errors.
+- Tram route 1 at 17:00, including weekday-level comparisons.
 
+The peak periods used in this project are defined as 07:00–09:59 and 16:00–18:59. This is an analytical assumption for the project, not an official Rīgas Satiksme definition.
 
-\- Prediction errors by transport mode.
+The route-level investigation identified underprediction during several weekday 17:00 observations for tram route 1. The sample is limited to the two-month test period, so the finding should be interpreted cautiously rather than as evidence of a specific operational cause.
 
-\- Prediction errors by route.
-
-\- Hourly model performance.
-
-\- Peak and off-peak periods.
-
-\- Prediction bias and largest errors.
-
-\- Tram route 1 at 17:00, including weekday-level comparisons.
-
-
-
-The route-level investigation identified consistent underprediction during several weekday 17:00 observations. This highlights the importance of examining errors beyond aggregate model metrics.
-
-
-
-\### Project Structure
-
-
+## Project Structure
 
 ```text
-
 SmartRoute-Riga/
-
+│
 ├── data/
-
 │   ├── raw/
-
+│   │   ├── qr_validacijas_2025_10.csv
+│   │   ├── ...
+│   │   └── qr_validacijas_2026_10.csv
+│   │
 │   └── processed/
-
+│       └── Generated datasets (not tracked by Git)
+│
 ├── models/
-
-│   └── best\_next\_hour\_model.joblib
-
-├── notebooks/
-
+│   └── best_next_hour_model.joblib
+│
 ├── reports/
-
 │   ├── figures/
-
+│   │   ├── actual_vs_predicted.png
+│   │   ├── mae_by_hour.png
+│   │   ├── mae_by_transport.png
+│   │   └── prediction_error_distribution.png
+│   │
 │   └── tables/
-
+│       ├── final_test_metrics.csv
+│       ├── model_comparison_validation.csv
+│       ├── feature_importance.csv
+│       ├── error_by_route.csv
+│       ├── error_by_transport.csv
+│       └── Additional analysis tables
+│
 ├── src/
-
-│   ├── 01\_inspect\_data.py
-
-│   ├── 02\_deep\_data\_audit.py
-
-│   ├── 03\_completeness\_audit.py
-
-│   ├── 04\_build\_model\_dataset.py
-
-│   ├── 05\_document\_route\_exclusion.py
-
-│   ├── 06\_train\_evaluate\_models.py
-
-│   ├── 07\_model\_error\_analysis.py
-
-│   └── 08\_tram\_route\_diagnostics.py
-
+│   ├── 01_inspect_data.py
+│   ├── 02_deep_data_audit.py
+│   ├── 03_completeness_audit.py
+│   ├── 04_build_model_dataset.py
+│   ├── 05_document_route_exclusion.py
+│   ├── 06_train_evaluate_models.py
+│   ├── 07_model_error_analysis.py
+│   └── 08_tram_route_diagnostics.py
+│
+├── .gitignore
+├── README.md
 └── requirements.txt
-
 ```
 
+## Technologies
 
+- **Python 3.11**
+- pandas
+- NumPy
+- scikit-learn
+- Matplotlib
+- Seaborn
+- joblib
+- Git and GitHub
 
-\### Technologies
+## Reproducibility
 
+Clone the repository:
 
-
-\- Python 3.11
-
-\- pandas
-
-\- NumPy
-
-\- scikit-learn
-
-\- Matplotlib
-
-\- Seaborn
-
-\- joblib
-
-\- Jupyter Notebook
-
-
-
-\### Limitations
-
-
-
-1\. QR validations do not represent all passengers.
-
-2\. Nine calendar dates in the observed date range have no records.
-
-3\. Historical data may not capture unexpected disruptions, special events or operational changes.
-
-4\. The model's test performance does not establish that the same accuracy will continue in future periods.
-
-5\. The route 1 peak-period analysis is based on a limited two-month test sample.
-
-6\. Feature importance indicates model reliance, not causal relationships.
-
-
-
-\### Reproducibility
-
-
+```bash
+git clone https://github.com/Rohith-gargula/SmartRoute-Riga.git
+cd SmartRoute-Riga
+```
 
 Install the dependencies:
 
-
-
 ```bash
-
 python -m pip install -r requirements.txt
-
 ```
 
-
-
-Run the scripts in numerical order from the project root:
-
-
+Run the scripts from the project root in numerical order:
 
 ```bash
-
-python src/01\_inspect\_data.py
-
-python src/02\_deep\_data\_audit.py
-
-python src/03\_completeness\_audit.py
-
-python src/04\_build\_model\_dataset.py
-
-python src/05\_document\_route\_exclusion.py
-
-python src/06\_train\_evaluate\_models.py
-
-python src/07\_model\_error\_analysis.py
-
-python src/08\_tram\_route\_diagnostics.py
-
+python src/01_inspect_data.py
+python src/02_deep_data_audit.py
+python src/03_completeness_audit.py
+python src/04_build_model_dataset.py
+python src/05_document_route_exclusion.py
+python src/06_train_evaluate_models.py
+python src/07_model_error_analysis.py
+python src/08_tram_route_diagnostics.py
 ```
 
+The original monthly CSV files are included in `data/raw/`.
 
+The scripts generate processed datasets and analysis outputs. The processed CSV datasets are excluded from Git to avoid storing large generated files in the repository.
 
-The original monthly CSV files must be placed in `data/raw/` before running the pipeline.
+**Note:** The model training and evaluation script can take several minutes to complete, depending on the computer.
 
+## Limitations and Critical Evaluation
 
+1. **Measurement limitation:** QR validations do not represent all passengers or total passenger demand.
+2. **Missing dates:** Nine calendar dates have no records, and missing observations cannot automatically be interpreted as zero activity.
+3. **Unexpected events:** Historical patterns may not capture disruptions, special events, weather changes or operational changes.
+4. **Generalisation:** Test performance does not guarantee equivalent accuracy in future periods.
+5. **Route-level sample size:** The tram route 1 at 17:00 investigation uses a limited two-month test sample.
+6. **Feature importance:** Feature importance indicates model reliance, not causal relationships.
+7. **Operational deployment:** The project is a retrospective academic research prototype, not a live forecasting or public transport scheduling system.
 
-\### Research Purpose
+## Research Purpose
 
+SmartRoute-Riga demonstrates an applied machine learning workflow for public transport analytics. It combines real-world data preparation, data quality assessment, time-based feature engineering, supervised regression, model comparison, explainability and critical evaluation.
 
+The project aims to explore how historical public transport validation patterns can support data-informed operational planning while recognising the limitations of the available data.
 
-This project demonstrates an applied machine learning workflow for public transport analytics, combining data quality assessment, time-series feature engineering, supervised regression, chronological evaluation, model explainability and critical error analysis.
+---
 
-
-
-It is an academic research prototype and not a deployed public transport scheduling system.
-
-
-
+**Project:** SmartRoute-Riga  
+**Focus:** Data Analytics, Machine Learning and Public Transport Forecasting  
+**Location:** Riga, Latvia  
+**Author:** Rohith Goud Gargula
